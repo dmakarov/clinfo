@@ -155,8 +155,12 @@ printImageFormats( int device_index, const cl_device_id *devices, cl_mem_flags f
     case CL_Rx:            printf( " [CL_Rx           " ); break;
     case CL_RGx:           printf( " [CL_RGx          " ); break;
     case CL_RGBx:          printf( " [CL_RGBx         " ); break;
+#ifdef CL_DEPTH
     case CL_DEPTH:         printf( " [CL_DEPTH        " ); break;
+#endif
+#ifdef CL_DEPTH_STENCIL
     case CL_DEPTH_STENCIL: printf( " [CL_DEPTH_STENCIL" ); break;
+#endif
     default:               printf( " [UKNOWN  %8x", image_formats[fmt].image_channel_order );
     }
     switch ( image_formats[fmt].image_channel_data_type )
@@ -176,7 +180,9 @@ printImageFormats( int device_index, const cl_device_id *devices, cl_mem_flags f
     case CL_UNSIGNED_INT32:  printf( ", CL_UNSIGNED_INT32]\n" );  break;
     case CL_HALF_FLOAT:      printf( ", CL_HALF_FLOAT]\n" );      break;
     case CL_FLOAT:           printf( ", CL_FLOAT]\n" );           break;
+#ifdef CL_UNORM_INT24
     case CL_UNORM_INT24:     printf( ", CL_UNORM_INT24]\n" );     break;
+#endif
     default:                 printf( ", UKNOWN %8x]\n", image_formats[fmt].image_channel_data_type );
     }
   }
