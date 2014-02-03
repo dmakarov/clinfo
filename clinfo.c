@@ -29,11 +29,11 @@
  *      void, but calls exit(1)...
  */
 static void
-Usage(const char *progName) {
-   Warning("Usage: %s [options]\n", progName);
-   Warning("Options:\n");
-   Warning("  -h, --help                This message\n");
-
+Usage( const char *progName )
+{
+   fprintf( stderr, "Usage: %s [options]\n", progName );
+   fprintf( stderr, "Options:\n" );
+   fprintf( stderr, "  -h, --help                This message\n" );
    exit(1);
 }
 
