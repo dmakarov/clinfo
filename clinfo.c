@@ -20,8 +20,6 @@
 #include "CL/cl.h"
 #endif
 
-#define Warning(...) fprintf( stderr, __VA_ARGS__ )
-
 /*
  * Usage --
  *
@@ -120,20 +118,22 @@ printImageFormats( int device_index, const cl_device_id *devices, cl_mem_flags f
   context = clCreateContext( NULL, 1, devices, NULL, NULL, &status );
   if ( status != CL_SUCCESS )
   {
-    Warning( "\tdevice[%d]: Unable to create context: %s!\n", device_index, CLErrString( status ) );
+    fprintf( stderr, "\tdevice[%d]: Unable to create context: %s!\n", device_index, CLErrString( status ) );
     return;
   }
   status = clGetSupportedImageFormats( context, flags, image_type, 0, NULL, &num_image_formats );
   if ( status != CL_SUCCESS )
   {
-    Warning( "\tdevice[%d]: Unable to get number of supported image formats: %s!\n", device_index, CLErrString( status ) );
+    fprintf( stderr, "\tdevice[%d]: Unable to get number of supported image formats: %s!\n",
+             device_index, CLErrString( status ) );
     return;
   }
   image_formats = (cl_image_format*) malloc( num_image_formats * sizeof(cl_image_format) );
   status = clGetSupportedImageFormats( context, flags, image_type, num_image_formats, image_formats, NULL );
   if ( status != CL_SUCCESS )
   {
-    Warning( "\tdevice[%d]: Unable to get supported image formats: %s!\n", device_index, CLErrString( status ) );
+    fprintf( stderr, "\tdevice[%d]: Unable to get supported image formats: %s!\n",
+             device_index, CLErrString( status ) );
     return;
   }
   for ( fmt = 0; fmt < num_image_formats; ++fmt )
@@ -187,9 +187,8 @@ printImageFormats( int device_index, const cl_device_id *devices, cl_mem_flags f
     }
   }
   free( image_formats );
-  status = clReleaseContext( context );
-  if ( status != CL_SUCCESS )
-    Warning( "\tdevice[%d]: Unable to release context: %s!\n", device_index, CLErrString( status ) );
+  if ( ( status = clReleaseContext( context ) ) != CL_SUCCESS )
+    fprintf( stderr, "\tdevice[%d]: Unable to release context: %s!\n", device_index, CLErrString( status ) );
 }
 
 /**
@@ -287,12 +286,14 @@ PrintDevice( int device_index, cl_device_id device )
       status = clGetDeviceInfo( device, strProps[ii].param, sizeof buf, buf, &size );
       if ( status != CL_SUCCESS )
       {
-         Warning( "\tdevice[%d]: Unable to get %s: %s!\n", device_index, strProps[ii].name, CLErrString(status) );
+         fprintf( stderr, "\tdevice[%d]: Unable to get %s: %s!\n",
+                  device_index, strProps[ii].name, CLErrString(status) );
          continue;
       }
       if (size > sizeof buf)
       {
-        Warning( "\tdevice[%d]: Large %s (%ld bytes)!  Truncating to %ld!\n", device_index, strProps[ii].name, size, sizeof(buf) );
+        fprintf( stderr, "\tdevice[%d]: Large %s (%ld bytes)!  Truncating to %ld!\n",
+                 device_index, strProps[ii].name, size, sizeof(buf) );
       }
       if ( strcmp( "EXTENSIONS", strProps[ii].name ) )
         printf( "\tdevice[%d]: %-30s: %s\n", device_index, strProps[ii].name, buf );
@@ -328,7 +329,7 @@ PrintDevice( int device_index, cl_device_id device )
       }
      printf( "\n" );
    } else {
-     Warning( "\tdevice[%d]: Unable to get TYPE: %s!\n", device_index, CLErrString(status) );
+     fprintf( stderr, "\tdevice[%d]: Unable to get TYPE: %s!\n", device_index, CLErrString(status) );
    }
 
    status = clGetDeviceInfo( device, CL_DEVICE_EXECUTION_CAPABILITIES, sizeof(val), &val, NULL);
@@ -347,7 +348,8 @@ PrintDevice( int device_index, cl_device_id device )
      }
      printf("\n");
    } else {
-     Warning("\tdevice[%d]: Unable to get EXECUTION_CAPABILITIES: %s!\n", device_index, CLErrString(status));
+     fprintf( stderr, "\tdevice[%d]: Unable to get EXECUTION_CAPABILITIES: %s!\n",
+              device_index, CLErrString(status));
    }
 
    status = clGetDeviceInfo(device, CL_DEVICE_GLOBAL_MEM_CACHE_TYPE, sizeof val, &val, NULL);
@@ -356,11 +358,12 @@ PrintDevice( int device_index, cl_device_id device )
      static const char *cacheTypes[] = { "None", "Read-Only", "Read-Write" };
      static size_t numTypes = sizeof cacheTypes / sizeof cacheTypes[0];
 
-     printf( "\tdevice[%d]: GLOBAL_MEM_CACHE_TYPE         : %s (%ld)\n", device_index, val < numTypes ? cacheTypes[val] : "???", (unsigned long) val );
+     printf( "\tdevice[%d]: GLOBAL_MEM_CACHE_TYPE         : %s (%ld)\n",
+             device_index, val < numTypes ? cacheTypes[val] : "???", (unsigned long) val );
    }
    else
    {
-     Warning("\tdevice[%d]: Unable to get GLOBAL_MEM_CACHE_TYPE: %s!\n", device_index, CLErrString(status));
+     fprintf( stderr, "\tdevice[%d]: Unable to get GLOBAL_MEM_CACHE_TYPE: %s!\n", device_index, CLErrString(status));
    }
    status = clGetDeviceInfo(device, CL_DEVICE_LOCAL_MEM_TYPE, sizeof val, &val, NULL);
    if (status == CL_SUCCESS)
@@ -368,22 +371,25 @@ PrintDevice( int device_index, cl_device_id device )
      static const char *lmemTypes[] = { "???", "Local", "Global" };
      static size_t numTypes = sizeof lmemTypes / sizeof lmemTypes[0];
 
-     printf( "\tdevice[%d]: CL_DEVICE_LOCAL_MEM_TYPE      : %s (%" PRIu64 ")\n", device_index, val < numTypes ? lmemTypes[val] : "???", val );
+     printf( "\tdevice[%d]: CL_DEVICE_LOCAL_MEM_TYPE      : %s (%" PRIu64 ")\n",
+             device_index, val < numTypes ? lmemTypes[val] : "???", val );
    }
    else
    {
-     Warning("\tdevice[%d]: Unable to get CL_DEVICE_LOCAL_MEM_TYPE: %s!\n", device_index, CLErrString(status));
+     fprintf( stderr, "\tdevice[%d]: Unable to get CL_DEVICE_LOCAL_MEM_TYPE: %s!\n", device_index, CLErrString(status));
    }
 
    for (ii = 0; hexProps[ii].name != NULL; ii++) {
       status = clGetDeviceInfo(device, hexProps[ii].param, sizeof val, &val, &size);
       if (status != CL_SUCCESS) {
-         Warning("\tdevice[%d]: Unable to get %s: %s!\n", device_index, hexProps[ii].name, CLErrString(status));
+         fprintf( stderr, "\tdevice[%d]: Unable to get %s: %s!\n",
+                  device_index, hexProps[ii].name, CLErrString(status));
          continue;
       }
       if ( size > sizeof val )
       {
-        Warning( "\tdevice[%d]: Large %s (%lu bytes)!  Truncating to %lu!\n", device_index, hexProps[ii].name, size, sizeof val );
+        fprintf( stderr, "\tdevice[%d]: Large %s (%lu bytes)!  Truncating to %lu!\n",
+                 device_index, hexProps[ii].name, size, sizeof val );
       }
       printf("\tdevice[%d]: %-30s: 0x%" PRIx64 "\n", device_index, hexProps[ii].name, val);
    }
@@ -391,12 +397,14 @@ PrintDevice( int device_index, cl_device_id device )
    for (ii = 0; longProps[ii].name != NULL; ii++) {
       status = clGetDeviceInfo(device, longProps[ii].param, sizeof val, &val, &size);
       if (status != CL_SUCCESS) {
-         Warning("\tdevice[%d]: Unable to get %s: %s!\n", device_index, longProps[ii].name, CLErrString(status));
+         fprintf( stderr, "\tdevice[%d]: Unable to get %s: %s!\n",
+                  device_index, longProps[ii].name, CLErrString(status));
          continue;
       }
       if ( size > sizeof val )
       {
-         Warning( "\tdevice[%d]: Large %s (%lu bytes)!  Truncating to %lu!\n", device_index, longProps[ii].name, size, sizeof val );
+         fprintf( stderr, "\tdevice[%d]: Large %s (%lu bytes)!  Truncating to %lu!\n",
+                  device_index, longProps[ii].name, size, sizeof val );
       }
       printf("\tdevice[%d]: %-30s: %'" PRIu64 "\n", device_index, longProps[ii].name, val);
    }
@@ -436,12 +444,14 @@ PrintPlatform( int platform_index, cl_platform_id platform )
       status = clGetPlatformInfo(platform, props[ii].param, sizeof buf, buf, &size);
       if (status != CL_SUCCESS)
       {
-         Warning( "platform[%d]: Unable to get %s: %s\n", platform_index, props[ii].name, CLErrString(status) );
+         fprintf( stderr, "platform[%d]: Unable to get %s: %s\n",
+                  platform_index, props[ii].name, CLErrString(status) );
          continue;
       }
       if ( size > sizeof buf )
       {
-         Warning( "platform[%d]: Huge %s (%lu bytes)!  Truncating to %lu\n", platform_index, props[ii].name, size, sizeof buf );
+         fprintf( stderr, "platform[%d]: Huge %s (%lu bytes)!  Truncating to %lu\n",
+                  platform_index, props[ii].name, size, sizeof buf );
       }
       if ( strcmp( "extensions", props[ii].name ) )
         printf("platform[%d]: %-10s: %s\n", platform_index, props[ii].name, buf);
@@ -455,16 +465,18 @@ PrintPlatform( int platform_index, cl_platform_id platform )
 
    if ((status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, NULL, &numDevices)) != CL_SUCCESS)
    {
-      Warning("platform[%d]: Unable to query the number of devices: %s\n", platform_index, CLErrString(status));
+      fprintf( stderr, "platform[%d]: Unable to query the number of devices: %s\n",
+               platform_index, CLErrString(status));
       return;
    }
    printf( "platform[%d]: Found %d device%s.\n", platform_index, numDevices, ( numDevices == 1 ? "" : "s" ) );
 
    deviceList = malloc(numDevices * sizeof(cl_device_id));
-   if ((status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, numDevices, deviceList, NULL)) != CL_SUCCESS)
+   if ( ( status = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, numDevices, deviceList, NULL ) ) != CL_SUCCESS )
    {
-      Warning( "platform[%d]: Unable to enumerate the devices: %s\n", platform_index, CLErrString(status) );
-      free(deviceList);
+      fprintf( stderr, "platform[%d]: Unable to enumerate the devices: %s\n",
+               platform_index, CLErrString(status) );
+      free( deviceList );
       return;
    }
 
@@ -494,7 +506,7 @@ main( int argc, char * argv[] )
 
   if ( ( status = clGetPlatformIDs( 0, NULL, &numPlatforms ) ) != CL_SUCCESS )
   {
-    Warning( "Unable to query the number of platforms: %s\n", CLErrString(status) );
+    fprintf( stderr, "Unable to query the number of platforms: %s\n", CLErrString(status) );
     exit( 1 );
   }
   printf( "Found %d platform%s.\n", numPlatforms, ( numPlatforms == 1 ? "" : "s" ) );
@@ -502,7 +514,7 @@ main( int argc, char * argv[] )
   platformList = malloc( sizeof(cl_platform_id) * numPlatforms );
   if ( ( status = clGetPlatformIDs( numPlatforms, platformList, NULL ) ) != CL_SUCCESS )
   {
-    Warning( "Unable to enumerate the platforms: %s\n", CLErrString( status ) );
+    fprintf( stderr, "Unable to enumerate the platforms: %s\n", CLErrString( status ) );
     exit( 1 );
   }
 
