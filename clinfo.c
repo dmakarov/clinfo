@@ -1,5 +1,5 @@
-/*
- * clInfo.c --
+/**
+ * clinfo.c --
  *
  *      Program to enumerate and dump all of the OpenCL information for a
  *      machine (or at least for a specific run-time).
@@ -26,7 +26,7 @@
  *      Prints the usage message and exits.
  *
  * Results:
- *      void, but calls exit(1)...
+ *      void, but calls exit(1)
  */
 static void
 usage( const char *program )
@@ -105,6 +105,14 @@ cl_strerror( cl_int error )
   return unknown;
 }
 
+/**
+ * print_image_format --
+ *
+ *      dumps all image formats supported by the device.
+ *
+ * Results:
+ *      void.
+ */
 static void
 print_image_formats( int device_index, const cl_device_id *devices, cl_mem_flags flags, cl_mem_object_type image_type )
 {
