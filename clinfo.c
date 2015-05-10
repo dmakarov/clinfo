@@ -101,7 +101,7 @@ cl_strerror( cl_int error )
     if ( error_table[ii].code == error )
       return error_table[ii].msg;
 
-  snprintf( unknown, sizeof(unknown), "unknown error %d", error );
+  snprintf( unknown, sizeof unknown, "unknown error %d", error );
   return unknown;
 }
 
@@ -134,7 +134,7 @@ print_image_formats( int device_index, const cl_device_id *devices, cl_mem_flags
              device_index, cl_strerror( err ) );
     return;
   }
-  image_formats = (cl_image_format*) malloc( num_image_formats * sizeof(cl_image_format) );
+  image_formats = (cl_image_format*) malloc(num_image_formats * sizeof (cl_image_format));
   err = clGetSupportedImageFormats( context, flags, image_type, num_image_formats, image_formats, NULL );
   if ( err != CL_SUCCESS )
   {
@@ -276,6 +276,7 @@ print_device( int device_index, cl_device_id device )
     { CL_DRIVER_VERSION, "DRIVER_VERSION" },
     { 0, NULL }
   };
+  size_t work_item_sizes[3];
   char buf[65536];
   char *word;
   uint64_t val; /* Avoids unpleasant surprises for some params */
@@ -293,7 +294,7 @@ print_device( int device_index, cl_device_id device )
     }
     if (size > sizeof buf)
     {
-      fprintf( stderr, "device[%d]: Large %s (%ld bytes)!  Truncating to %ld!\n", device_index, strProps[ii].name, size, sizeof(buf) );
+      fprintf( stderr, "device[%d]: Large %s (%ld bytes)!  Truncating to %ld!\n", device_index, strProps[ii].name, size, sizeof buf );
     }
     if ( strcmp( "EXTENSIONS", strProps[ii].name ) )
     {
@@ -307,7 +308,7 @@ print_device( int device_index, cl_device_id device )
     }
   }
 
-  err = clGetDeviceInfo( device, CL_DEVICE_TYPE, sizeof(val), &val, NULL );
+  err = clGetDeviceInfo( device, CL_DEVICE_TYPE, sizeof val, &val, NULL );
   if (err == CL_SUCCESS)
   {
     printf("device[%d]: TYPE                          : ", device_index );
@@ -342,7 +343,7 @@ print_device( int device_index, cl_device_id device )
     fprintf( stderr, "device[%d]: Unable to get TYPE: %s!\n", device_index, cl_strerror(err) );
   }
 
-  err = clGetDeviceInfo( device, CL_DEVICE_EXECUTION_CAPABILITIES, sizeof(val), &val, NULL);
+  err = clGetDeviceInfo( device, CL_DEVICE_EXECUTION_CAPABILITIES, sizeof val, &val, NULL);
   if (err == CL_SUCCESS)
   {
     printf("device[%d]: EXECUTION_CAPABILITIES        : ", device_index );
@@ -394,32 +395,42 @@ print_device( int device_index, cl_device_id device )
 
   for ( ii = 0; hexProps[ii].name != NULL; ++ii )
   {
-    err = clGetDeviceInfo( device, hexProps[ii].param, sizeof(val), &val, &size );
+    err = clGetDeviceInfo( device, hexProps[ii].param, sizeof val, &val, &size );
     if ( CL_SUCCESS != err )
     {
       fprintf( stderr, "device[%d]: Unable to get %s: %s!\n", device_index, hexProps[ii].name, cl_strerror( err ) );
       continue;
     }
-    if ( size > sizeof(val) )
+    if ( size > sizeof val )
     {
-      fprintf( stderr, "device[%d]: Large %s (%lu bytes)!  Truncating to %lu!\n", device_index, hexProps[ii].name, size, sizeof(val) );
+      fprintf( stderr, "device[%d]: Large %s (%lu bytes)!  Truncating to %lu!\n", device_index, hexProps[ii].name, size, sizeof val );
     }
     printf( "device[%d]: %-30s: 0x%" PRIx64 "\n", device_index, hexProps[ii].name, val );
   }
 
   for ( ii = 0; longProps[ii].name != NULL; ++ii )
   {
-    err = clGetDeviceInfo( device, longProps[ii].param, sizeof(val), &val, &size );
+    err = clGetDeviceInfo( device, longProps[ii].param, sizeof val, &val, &size );
     if ( CL_SUCCESS != err )
     {
       fprintf( stderr, "device[%d]: Unable to get %s: %s!\n", device_index, longProps[ii].name, cl_strerror( err ) );
       continue;
     }
-    if ( size > sizeof(val) )
+    if ( size > sizeof val )
     {
-      fprintf( stderr, "device[%d]: Large %s (%lu bytes)!  Truncating to %lu!\n", device_index, longProps[ii].name, size, sizeof(val) );
+      fprintf( stderr, "device[%d]: Large %s (%lu bytes)!  Truncating to %lu!\n", device_index, longProps[ii].name, size, sizeof val );
     }
     printf( "device[%d]: %-30s: %'" PRIu64 "\n", device_index, longProps[ii].name, val );
+  }
+  err = clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_ITEM_SIZES, sizeof work_item_sizes, work_item_sizes, NULL);
+  if ( CL_SUCCESS != err )
+  {
+    fprintf(stderr, "device[%d]: Unable to get MAX_WORK_ITEM_SIZES: %s!\n", device_index, cl_strerror(err));
+  }
+  else
+  {
+    printf( "device[%d]: %-30s: %zd, %zd, %zd\n",
+            device_index, "MAX_WORK_ITEM_SIZES", work_item_sizes[0], work_item_sizes[1], work_item_sizes[2] );
   }
   printf( "device[%d]: %-30s:", device_index, "IMAGE FORMATS" );
   print_image_formats( device_index, &device, CL_MEM_READ_ONLY, CL_MEM_OBJECT_IMAGE2D );
@@ -454,13 +465,13 @@ print_platform( int platform_index, cl_platform_id platform )
 
   for ( ii = 0; props[ii].name != NULL; ++ii )
   {
-    err = clGetPlatformInfo( platform, props[ii].param, sizeof(buf), buf, &size );
+    err = clGetPlatformInfo( platform, props[ii].param, sizeof buf, buf, &size );
     if ( CL_SUCCESS != err )
     {
       fprintf( stderr, "platform[%d]: Unable to get %s: %s\n", platform_index, props[ii].name, cl_strerror( err ) );
       continue;
     }
-    if ( size > sizeof(buf) )
+    if ( size > sizeof buf )
     {
       fprintf( stderr, "platform[%d]: Huge %s (%lu bytes)!  Truncating to %lu\n", platform_index, props[ii].name, size, sizeof buf );
     }
@@ -484,7 +495,7 @@ print_platform( int platform_index, cl_platform_id platform )
   }
   printf( "platform[%d], %d device%s:\n", platform_index, number_of_devices, ( number_of_devices == 1 ? "" : "s" ) );
 
-  device_ids = malloc( number_of_devices * sizeof(cl_device_id) );
+  device_ids = malloc(number_of_devices * sizeof (cl_device_id));
   err = clGetDeviceIDs( platform, CL_DEVICE_TYPE_ALL, number_of_devices, device_ids, NULL );
   if ( CL_SUCCESS != err )
   {
@@ -525,10 +536,10 @@ main( int argc, char * argv[] )
   }
   printf( "%d platform%s:\n", number_of_platforms, ( number_of_platforms == 1 ? "" : "s" ) );
 
-  platform_ids = malloc( sizeof(cl_platform_id) * number_of_platforms );
+  platform_ids = malloc(number_of_platforms * sizeof (cl_platform_id));
   if ( NULL == platform_ids )
   {
-    fprintf( stderr, "Can't allocate memory for platform IDs (size %zd)", sizeof(cl_platform_id) * number_of_platforms );
+    fprintf(stderr, "Can't allocate memory for platform IDs (size %zd)", number_of_platforms * sizeof(cl_platform_id));
     exit( 1 );
   }
   err = clGetPlatformIDs( number_of_platforms, platform_ids, NULL );
