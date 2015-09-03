@@ -452,7 +452,8 @@ private:
       static const char *lmemTypes[] = { "???", "Local", "Global" };
       static size_t numTypes = sizeof lmemTypes / sizeof lmemTypes[0];
 
-      printf("device[%d]: CL_DEVICE_LOCAL_MEM_TYPE      : %s (%" PRIu64 ")\n", device_index, val < numTypes ? lmemTypes[val] : "???", val);
+      cout << "device[" << device_index << "]: CL_DEVICE_LOCAL_MEM_TYPE      : "
+           << (val < numTypes ? lmemTypes[val] : "???") << " (" << val << ")" << endl;
     }
     else
     {
@@ -471,7 +472,7 @@ private:
       {
         fprintf(stderr, "device[%d]: Large %s (%lu bytes)!  Truncating to %lu!\n", device_index, hexProps[ii].name, size, sizeof val);
       }
-      printf("device[%d]: %-30s: 0x%" PRIx64 "\n", device_index, hexProps[ii].name, val);
+      cout << "device[" << device_index << "]: " << left << setw(30) << hexProps[ii].name << ": 0x" << hex << val << dec << endl;
     }
 
     for (ii = 0; longProps[ii].name != NULL; ++ii)
@@ -486,7 +487,7 @@ private:
       {
         fprintf(stderr, "device[%d]: Large %s (%lu bytes)!  Truncating to %lu!\n", device_index, longProps[ii].name, size, sizeof val);
       }
-      printf("device[%d]: %-30s: %'" PRIu64 "\n", device_index, longProps[ii].name, val);
+      cout << "device[" << device_index << "]: " << left << setw(30) << longProps[ii].name << ": " << val << endl;
     }
     err = clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_ITEM_SIZES, sizeof work_item_sizes, work_item_sizes, NULL);
     if (CL_SUCCESS != err)
