@@ -300,8 +300,7 @@ private:
     defn(NAME),                               \
     defn(VENDOR),                             \
     defn(PROFILE),                            \
-    defn(VERSION),                            \
-    defn(EXTENSIONS),
+    defn(VERSION),
 
 #define HEX_PROPS                             \
     defn(SINGLE_FP_CONFIG),                   \
@@ -324,6 +323,7 @@ private:
       STR_PROPS
 #undef defn
       {CL_DRIVER_VERSION, "DRIVER_VERSION"},
+      {CL_DEVICE_EXTENSIONS, "EXTENSIONS"},
       {0, NULL}
     };
     size_t work_item_sizes[3];
@@ -333,36 +333,6 @@ private:
     cl_int err;
     int ii;
     stringstream ss;
-
-    for (ii = 0; strProps[ii].name != NULL; ++ii)
-    {
-      err = clGetDeviceInfo(device, strProps[ii].param, sizeof buf, buf, &size);
-      if (err != CL_SUCCESS)
-      {
-        fprintf(stderr, "device[%d]: Unable to get %s: %s!\n", device_index, strProps[ii].name, cl_strerror(err));
-        continue;
-      }
-      if (size > sizeof buf)
-      {
-        fprintf(stderr, "device[%d]: Large %s (%ld bytes)!  Truncating to %ld!\n", device_index, strProps[ii].name, size, sizeof buf);
-      }
-      if (string("EXTENSIONS") != strProps[ii].name)
-      {
-        printf("device[%d]: %-30s: %s\n", device_index, strProps[ii].name, buf);
-      }
-      else
-      {
-        ss.str(buf);
-        string word;
-        vector<string> words;
-        while (ss >> word)
-          words.push_back(word);
-        sort(words.begin(), words.end());
-        printf("device[%d]: %-30s: %s\n", device_index, strProps[ii].name, words[0].c_str());
-        for (vector<string>::size_type ii = 1; ii != words.size(); ++ii)
-          cout << setw(43) << " " << words[ii] << endl;
-      }
-    }
 
     err = clGetDeviceInfo(device, CL_DEVICE_TYPE, sizeof val, &val, NULL);
     if (err == CL_SUCCESS)
@@ -397,6 +367,36 @@ private:
     else
     {
       fprintf(stderr, "device[%d]: Unable to get TYPE: %s!\n", device_index, cl_strerror(err));
+    }
+
+    for (ii = 0; strProps[ii].name != NULL; ++ii)
+    {
+      err = clGetDeviceInfo(device, strProps[ii].param, sizeof buf, buf, &size);
+      if (err != CL_SUCCESS)
+      {
+        fprintf(stderr, "device[%d]: Unable to get %s: %s!\n", device_index, strProps[ii].name, cl_strerror(err));
+        continue;
+      }
+      if (size > sizeof buf)
+      {
+        fprintf(stderr, "device[%d]: Large %s (%ld bytes)!  Truncating to %ld!\n", device_index, strProps[ii].name, size, sizeof buf);
+      }
+      if (string("EXTENSIONS") != strProps[ii].name)
+      {
+        printf("device[%d]: %-30s: %s\n", device_index, strProps[ii].name, buf);
+      }
+      else
+      {
+        ss.str(buf);
+        string word;
+        vector<string> words;
+        while (ss >> word)
+          words.push_back(word);
+        sort(words.begin(), words.end());
+        printf("device[%d]: %-30s: %s\n", device_index, strProps[ii].name, words[0].c_str());
+        for (vector<string>::size_type ii = 1; ii != words.size(); ++ii)
+          cout << setw(43) << " " << words[ii] << endl;
+      }
     }
 
     err = clGetDeviceInfo(device, CL_DEVICE_EXECUTION_CAPABILITIES, sizeof val, &val, NULL);
@@ -503,10 +503,10 @@ private:
 void print_platform(int index, cl_platform_id platform)
 {
   static struct { cl_platform_info param; const char *name; } props[] = {
-    { CL_PLATFORM_PROFILE,    "profile"    },
-    { CL_PLATFORM_VERSION,    "version"    },
     { CL_PLATFORM_NAME,       "name"       },
     { CL_PLATFORM_VENDOR,     "vendor"     },
+    { CL_PLATFORM_PROFILE,    "profile"    },
+    { CL_PLATFORM_VERSION,    "version"    },
     { CL_PLATFORM_EXTENSIONS, "extensions" },
     { 0, nullptr },
   };
