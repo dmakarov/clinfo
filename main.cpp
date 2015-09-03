@@ -327,11 +327,11 @@ private:
     };
     size_t work_item_sizes[3];
     char buf[65536];
-    char *word;
     uint64_t val; /* Avoids unpleasant surprises for some params */
     size_t size;
     cl_int err;
     int ii;
+    stringstream ss;
 
     for (ii = 0; strProps[ii].name != NULL; ++ii)
     {
@@ -345,15 +345,18 @@ private:
       {
         fprintf(stderr, "device[%d]: Large %s (%ld bytes)!  Truncating to %ld!\n", device_index, strProps[ii].name, size, sizeof buf);
       }
-      if (strcmp("EXTENSIONS", strProps[ii].name))
+      if (string("EXTENSIONS") != strProps[ii].name)
       {
         printf("device[%d]: %-30s: %s\n", device_index, strProps[ii].name, buf);
       }
       else
       {
-        printf("device[%d]: %-30s: %s\n", device_index, strProps[ii].name, (word = strtok(buf, " ")));
-        for (word = strtok(NULL, " "); word; word = strtok(NULL, " "))
-          printf("%42s %s\n", "", word);
+        ss.str(buf);
+        string word;
+        ss >> word;
+        printf("device[%d]: %-30s: %s\n", device_index, strProps[ii].name, word.c_str());
+        while (ss >> word)
+          cout << setw(43) << " " << word << endl;
       }
     }
 
@@ -518,7 +521,7 @@ void print_platform(int index, cl_platform_id platform)
     {
       fprintf(stderr, "platform[%d]: Huge %s (%lu bytes)!  Truncating to %lu\n", index, props[ii].name, size, sizeof buf);
     }
-    if (strcmp("extensions", props[ii].name))
+    if (string("extensions") != props[ii].name)
     {
       printf("platform[%d]: %-10s: %s\n", index, props[ii].name, buf);
     }
@@ -529,7 +532,8 @@ void print_platform(int index, cl_platform_id platform)
       ss >> word;
       printf("platform[%d]: %-10s: %s\n", index, props[ii].name, word.c_str());
       while (ss >> word)
-        cout << setw(25) << word << endl;
+        cout << setw(25) << " " << word << endl;
+      ss.str(string());
     }
   }
 
