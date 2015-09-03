@@ -10,6 +10,7 @@
 #include <locale.h>
 #include <getopt.h>
 #include <stdlib.h>
+#include <algorithm>
 #include <iomanip>
 #include <iostream>
 #include <memory>
@@ -353,10 +354,13 @@ private:
       {
         ss.str(buf);
         string word;
-        ss >> word;
-        printf("device[%d]: %-30s: %s\n", device_index, strProps[ii].name, word.c_str());
+        vector<string> words;
         while (ss >> word)
-          cout << setw(43) << " " << word << endl;
+          words.push_back(word);
+        sort(words.begin(), words.end());
+        printf("device[%d]: %-30s: %s\n", device_index, strProps[ii].name, words[0].c_str());
+        for (vector<string>::size_type ii = 1; ii != words.size(); ++ii)
+          cout << setw(43) << " " << words[ii] << endl;
       }
     }
 
@@ -529,10 +533,13 @@ void print_platform(int index, cl_platform_id platform)
     {
       ss.str(buf);
       string word;
-      ss >> word;
-      printf("platform[%d]: %-10s: %s\n", index, props[ii].name, word.c_str());
+      vector<string> words;
       while (ss >> word)
-        cout << setw(25) << " " << word << endl;
+        words.push_back(word);
+      sort(words.begin(), words.end());
+      printf("platform[%d]: %-10s: %s\n", index, props[ii].name, words[0].c_str());
+      for (vector<string>::size_type ii = 1; ii != words.size(); ++ii)
+        cout << setw(25) << " " << words[ii] << endl;
       ss.str(string());
     }
   }
