@@ -487,7 +487,7 @@ private:
       {
         fprintf(stderr, "device[%d]: Large %s (%lu bytes)!  Truncating to %lu!\n", device_index, longProps[ii].name, size, sizeof val);
       }
-      cout << "device[" << device_index << "]: " << left << setw(30) << longProps[ii].name << ": " << val << endl;
+      cout << "device[" << device_index << "]: " << left << setw(30) << longProps[ii].name << ": " << format_long(val) << endl;
     }
     err = clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_ITEM_SIZES, sizeof work_item_sizes, work_item_sizes, NULL);
     if (CL_SUCCESS != err)
@@ -504,6 +504,18 @@ private:
       printf("device[%d]: %-30s:", device_index, "IMAGE FORMATS");
       print_image_formats(device_index, &device, CL_MEM_READ_ONLY, CL_MEM_OBJECT_IMAGE2D);
     }
+  }
+
+  string format_long(uint64_t val)
+  {
+    string r = to_string(val % 1000);
+    while (val > 999)
+    {
+      auto x = val % 1000;
+      val = val / 1000;
+      r = to_string(val % 1000) + "," + (x < 100 ? (x < 10 ? string("00") + r : string("0") + r) : r);
+    }
+    return r;
   }
 
 /**
