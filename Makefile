@@ -1,12 +1,12 @@
 HOME   := $(PWD)
 CXX    := g++
-CFLAGS := -Wall -Wextra -pedantic -O3 -std=c++11
+CFLAGS := -Wall -Wextra -pedantic -O3
 UNAME  := $(shell uname)
 ifeq ($(UNAME), Linux)
-LIBS   := -lm -lOpenCL -lrt
+LIBS   := --std=c++11 -lm -lOpenCL -lrt
 endif
 ifeq ($(UNAME), Darwin)
-LIBS   := -framework OpenCL
+LIBS   := -std=c++11 -framework OpenCL
 endif
 
 all: clinfo

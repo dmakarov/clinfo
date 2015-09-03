@@ -33,6 +33,7 @@ public:
 
   CLinfo(int argc, char** argv)
   {
+    dump_image_formats = false;
     parse_options(argc, argv);
 
     cl_uint num_platforms;
@@ -66,6 +67,7 @@ public:
 
 private:
   vector<cl_platform_id> platforms;
+  bool dump_image_formats;
 
   void check_opencl_status(cl_int err, const string& msg)
   {
@@ -89,6 +91,7 @@ private:
     fprintf(stderr, "Usage: %s [options]\n", program);
     fprintf(stderr, "Options:\n");
     fprintf(stderr, "  -h, --help                This message\n");
+    fprintf(stderr, "  -i, --image-formats       Print image formats for each device\n");
     exit(1);
   }
 
@@ -103,13 +106,20 @@ private:
    */
   void parse_options(int argc, char *argv[])
   {
-    static struct option options[] = { { "help", 0, 0, 'h' }, };
+    static struct option options[] = {
+      { "help",          0, nullptr, 'h' },
+      { "image-formats", 0, nullptr, 'i' },
+      { nullptr,         0, nullptr, 0}
+    };
     int opt;
 
-    while (EOF != (opt = getopt_long(argc, argv, "h", options, NULL)))
+    while (EOF != (opt = getopt_long(argc, argv, "hi", options, NULL)))
     {
       switch (opt)
       {
+      case 'i':
+        dump_image_formats = true;
+        break;
       case 'h':
       default:
         usage(argv[0]);
@@ -488,8 +498,11 @@ private:
       printf("device[%d]: %-30s: %zd, %zd, %zd\n",
              device_index, "MAX_WORK_ITEM_SIZES", work_item_sizes[0], work_item_sizes[1], work_item_sizes[2]);
     }
-    printf("device[%d]: %-30s:", device_index, "IMAGE FORMATS");
-    print_image_formats(device_index, &device, CL_MEM_READ_ONLY, CL_MEM_OBJECT_IMAGE2D);
+    if (dump_image_formats)
+    {
+      printf("device[%d]: %-30s:", device_index, "IMAGE FORMATS");
+      print_image_formats(device_index, &device, CL_MEM_READ_ONLY, CL_MEM_OBJECT_IMAGE2D);
+    }
   }
 
 /**
