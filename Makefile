@@ -1,7 +1,6 @@
 HOME   := $(PWD)
-CC     := gcc
 CXX    := g++
-CFLAGS := -Wall -Wextra -pedantic -O3
+CFLAGS := -Wall -Wextra -pedantic -O3 -std=c++11
 UNAME  := $(shell uname)
 ifeq ($(UNAME), Linux)
 LIBS   := -lm -lOpenCL -lrt
@@ -12,8 +11,8 @@ endif
 
 all: clinfo
 
-clinfo: clinfo.c
-	$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
+clinfo: main.cpp
+	$(CXX) $(CFLAGS) $^ -o $@ $(LIBS)
 
 clean:
 	@rm -f clinfo *~
