@@ -10,6 +10,7 @@
 #include <locale.h>
 #include <getopt.h>
 #include <stdlib.h>
+#include <iomanip>
 #include <iostream>
 #include <memory>
 #include <sstream>
@@ -503,7 +504,6 @@ void print_platform(int index, cl_platform_id platform)
     { 0, nullptr },
   };
   char buf[65536];
-  char *word;
   size_t size;
   cl_int err;
   stringstream ss;
@@ -524,9 +524,12 @@ void print_platform(int index, cl_platform_id platform)
     }
     else
     {
-      printf("platform[%d]: %-10s: %s\n", index, props[ii].name, (word = strtok(buf, " ")));
-      for (word = strtok(NULL, " "); word; word = strtok(NULL, " "))
-        printf("%24s %s\n", "", word);
+      ss.str(buf);
+      string word;
+      ss >> word;
+      printf("platform[%d]: %-10s: %s\n", index, props[ii].name, word.c_str());
+      while (ss >> word)
+        cout << setw(25) << word << endl;
     }
   }
 
