@@ -1,5 +1,5 @@
 HOME   := $(PWD)
-CXX    := g++
+CXX    ?= g++
 CFLAGS := -std=c++11 -Wall -Wextra -pedantic -O3
 UNAME  := $(shell uname)
 ifeq ($(UNAME), Linux)
