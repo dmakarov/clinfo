@@ -6,10 +6,8 @@
  *
  * (Jeremy Sugerman, 13 August 2009)
  */
-#include <inttypes.h>
-#include <locale.h>
 #include <getopt.h>
-#include <stdlib.h>
+#include <cstdlib>
 #include <algorithm>
 #include <iomanip>
 #include <iostream>
@@ -17,9 +15,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#ifdef __MACH__
-#include <mach/clock.h>
-#include <mach/mach.h>
+#ifdef __APPLE__
 #include <OpenCL/opencl.h>
 #else
 #include "CL/cl.h"
@@ -518,84 +514,83 @@ private:
     return r;
   }
 
-/**
- * print_platform --
- *
- *      Dumps everything about the given platform ID.
- *
- * Results:
- *      void.
- */
-void print_platform(int index, cl_platform_id platform)
-{
-  static struct { cl_platform_info param; const char *name; } props[] = {
-    { CL_PLATFORM_NAME,       "name"       },
-    { CL_PLATFORM_VENDOR,     "vendor"     },
-    { CL_PLATFORM_PROFILE,    "profile"    },
-    { CL_PLATFORM_VERSION,    "version"    },
-    { CL_PLATFORM_EXTENSIONS, "extensions" },
-    { 0, nullptr },
-  };
-  char buf[65536];
-  size_t size;
-  cl_int err;
-  stringstream ss;
-
-  for (cl_uint ii = 0; props[ii].name != nullptr; ++ii)
+  /**
+   * print_platform --
+   *
+   *      Dumps everything about the given platform ID.
+   *
+   * Results:
+   *      void.
+   */
+  void print_platform(int index, cl_platform_id platform)
   {
-    err = clGetPlatformInfo(platform, props[ii].param, sizeof buf, buf, &size);
-    ss << "platform[" << index << "]: Unable to get " << props[ii].name;
+    static struct { cl_platform_info param; const char *name; } props[] = {
+      { CL_PLATFORM_NAME,       "name"       },
+      { CL_PLATFORM_VENDOR,     "vendor"     },
+      { CL_PLATFORM_PROFILE,    "profile"    },
+      { CL_PLATFORM_VERSION,    "version"    },
+      { CL_PLATFORM_EXTENSIONS, "extensions" },
+      { 0, nullptr },
+    };
+    char buf[65536];
+    size_t size;
+    cl_int err;
+    stringstream ss;
+
+    for (cl_uint ii = 0; props[ii].name != nullptr; ++ii)
+    {
+      err = clGetPlatformInfo(platform, props[ii].param, sizeof buf, buf, &size);
+      ss << "platform[" << index << "]: Unable to get " << props[ii].name;
+      check_opencl_status(err, ss.str());
+      ss.str(string());
+      if (size > sizeof buf)
+      {
+        fprintf(stderr, "platform[%d]: Huge %s (%lu bytes)!  Truncating to %lu\n", index, props[ii].name, size, sizeof buf);
+      }
+      if (string("extensions") != props[ii].name)
+      {
+        printf("platform[%d]: %-10s: %s\n", index, props[ii].name, buf);
+      }
+      else
+      {
+        ss.str(buf);
+        string word;
+        vector<string> words;
+        while (ss >> word)
+          words.push_back(word);
+        sort(words.begin(), words.end());
+        printf("platform[%d]: %-10s: %s\n", index, props[ii].name, words[0].c_str());
+        for (vector<string>::size_type ii = 1; ii != words.size(); ++ii)
+          cout << setw(25) << " " << words[ii] << endl;
+        ss.str(string());
+      }
+    }
+
+    cl_uint num_devices;
+    err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, NULL, &num_devices);
+    ss << "platform[" << index << "]: Unable to query the number of devices";
     check_opencl_status(err, ss.str());
     ss.str(string());
-    if (size > sizeof buf)
+    printf("platform[%d], %d device%s:\n", index, num_devices, (num_devices == 1 ? "" : "s"));
+
+    unique_ptr<cl_device_id> device_ids(new cl_device_id[num_devices]);
+    err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, num_devices, device_ids.get(), NULL);
+    ss << "platform[" << index << "]: Unable to enumerate the devices";
+    check_opencl_status(err, ss.str());
+    ss.str(string());
+
+    for (cl_uint ii = 0; ii < num_devices; ++ii)
     {
-      fprintf(stderr, "platform[%d]: Huge %s (%lu bytes)!  Truncating to %lu\n", index, props[ii].name, size, sizeof buf);
-    }
-    if (string("extensions") != props[ii].name)
-    {
-      printf("platform[%d]: %-10s: %s\n", index, props[ii].name, buf);
-    }
-    else
-    {
-      ss.str(buf);
-      string word;
-      vector<string> words;
-      while (ss >> word)
-        words.push_back(word);
-      sort(words.begin(), words.end());
-      printf("platform[%d]: %-10s: %s\n", index, props[ii].name, words[0].c_str());
-      for (vector<string>::size_type ii = 1; ii != words.size(); ++ii)
-        cout << setw(25) << " " << words[ii] << endl;
-      ss.str(string());
+      print_device(ii, *(device_ids.get() + ii));
+      if (ii + 1 < num_devices)
+        cout << "--------------------------------------------------------------------------------\n";
     }
   }
-
-  cl_uint num_devices;
-  err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, NULL, &num_devices);
-  ss << "platform[" << index << "]: Unable to query the number of devices";
-  check_opencl_status(err, ss.str());
-  ss.str(string());
-  printf("platform[%d], %d device%s:\n", index, num_devices, (num_devices == 1 ? "" : "s"));
-
-  unique_ptr<cl_device_id> device_ids(new cl_device_id[num_devices]);
-  err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, num_devices, device_ids.get(), NULL);
-  ss << "platform[" << index << "]: Unable to enumerate the devices";
-  check_opencl_status(err, ss.str());
-  ss.str(string());
-
-  for (cl_uint ii = 0; ii < num_devices; ++ii)
-  {
-    print_device(ii, *(device_ids.get() + ii));
-    if (ii + 1 < num_devices)
-      cout << "--------------------------------------------------------------------------------\n";
-  }
-}
 
 };
 
 int main(int argc, char* argv[])
 {
-  setlocale(LC_NUMERIC, "en_US.UTF-8");
   CLinfo info(argc, argv);
   info.display();
   return EXIT_SUCCESS;
