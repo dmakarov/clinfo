@@ -141,6 +141,18 @@ private:
     return unknown;
   }
 
+  string format_long(uint64_t val)
+  {
+    string r = to_string(val % 1000);
+    while (val > 999)
+    {
+      auto x = val % 1000;
+      val = val / 1000;
+      r = to_string(val % 1000) + "," + (x < 100 ? (x < 10 ? string("00") + r : string("0") + r) : r);
+    }
+    return r;
+  }
+
   /**
    * print_image_format --
    *
@@ -164,16 +176,14 @@ private:
     err = clGetSupportedImageFormats(context, flags, image_type, 0, NULL, &num_image_formats);
     if (err != CL_SUCCESS)
     {
-      fprintf(stderr, "\tdevice[%d]: Unable to get number of supported image formats: %s!\n",
-              device_index, cl_strerror(err));
+      fprintf(stderr, "\tdevice[%d]: Unable to get number of supported image formats: %s!\n", device_index, cl_strerror(err));
       return;
     }
     auto image_formats = new cl_image_format[num_image_formats];
     err = clGetSupportedImageFormats(context, flags, image_type, num_image_formats, image_formats, NULL);
     if (err != CL_SUCCESS)
     {
-      fprintf(stderr, "\tdevice[%d]: Unable to get supported image formats: %s!\n",
-              device_index, cl_strerror(err));
+      fprintf(stderr, "\tdevice[%d]: Unable to get supported image formats: %s!\n", device_index, cl_strerror(err));
       return;
     }
     for (fmt = 0; fmt < num_image_formats; ++fmt)
@@ -229,6 +239,20 @@ private:
     delete[] image_formats;
     if ((err = clReleaseContext(context)) != CL_SUCCESS)
       fprintf(stderr, "\tdevice[%d]: Unable to release context: %s!\n", device_index, cl_strerror(err));
+  }
+
+  void print_extensions(const char* buf, int width)
+  {
+    vector<string> words;
+    stringstream ss;
+    string word;
+    ss.str(buf);
+    while (ss >> word)
+      words.push_back(word);
+    sort(words.begin(), words.end());
+    cout << words[0] << endl;
+    for (vector<string>::size_type ii = 1; ii != words.size(); ++ii)
+      cout << setw(width) << " " << words[ii] << endl;
   }
 
   /**
@@ -314,7 +338,6 @@ private:
     uint64_t val; /* Avoids unpleasant surprises for some params */
     size_t size;
     cl_int err;
-    stringstream ss;
 
     err = clGetDeviceInfo(device, CL_DEVICE_TYPE, sizeof val, &val, NULL);
     if (err == CL_SUCCESS)
@@ -363,22 +386,11 @@ private:
       {
         fprintf(stderr, "device[%d]: Large %s (%ld bytes)!  Truncating to %ld!\n", device_index, strProps[ii].name, size, sizeof buf);
       }
+      cout << "device[" << device_index << "]: " << left << setw(30) << strProps[ii].name << ": ";
       if (string("EXTENSIONS") != strProps[ii].name)
-      {
-        printf("device[%d]: %-30s: %s\n", device_index, strProps[ii].name, buf);
-      }
+        cout << buf << endl;
       else
-      {
-        ss.str(buf);
-        string word;
-        vector<string> words;
-        while (ss >> word)
-          words.push_back(word);
-        sort(words.begin(), words.end());
-        printf("device[%d]: %-30s: %s\n", device_index, strProps[ii].name, words[0].c_str());
-        for (vector<string>::size_type ii = 1; ii != words.size(); ++ii)
-          cout << setw(43) << " " << words[ii] << endl;
-      }
+        print_extensions(buf, 43);
     }
 
     err = clGetDeviceInfo(device, CL_DEVICE_EXECUTION_CAPABILITIES, sizeof val, &val, NULL);
@@ -468,26 +480,13 @@ private:
     }
     else
     {
-      printf("device[%d]: %-30s: %zd, %zd, %zd\n",
-             device_index, "MAX_WORK_ITEM_SIZES", work_item_sizes[0], work_item_sizes[1], work_item_sizes[2]);
+      printf("device[%d]: %-30s: %zd, %zd, %zd\n", device_index, "MAX_WORK_ITEM_SIZES", work_item_sizes[0], work_item_sizes[1], work_item_sizes[2]);
     }
     if (dump_image_formats)
     {
       printf("device[%d]: %-30s:", device_index, "IMAGE FORMATS");
       print_image_formats(device_index, &device, CL_MEM_READ_ONLY, CL_MEM_OBJECT_IMAGE2D);
     }
-  }
-
-  string format_long(uint64_t val)
-  {
-    string r = to_string(val % 1000);
-    while (val > 999)
-    {
-      auto x = val % 1000;
-      val = val / 1000;
-      r = to_string(val % 1000) + "," + (x < 100 ? (x < 10 ? string("00") + r : string("0") + r) : r);
-    }
-    return r;
   }
 
   /**
@@ -509,9 +508,9 @@ private:
       { 0, nullptr },
     };
     char buf[65536];
+    stringstream ss;
     size_t size;
     cl_int err;
-    stringstream ss;
 
     for (cl_uint ii = 0; props[ii].name != nullptr; ++ii)
     {
@@ -523,23 +522,11 @@ private:
       {
         fprintf(stderr, "platform[%d]: Huge %s (%lu bytes)!  Truncating to %lu\n", index, props[ii].name, size, sizeof buf);
       }
+      cout << "platform[" << index << "]: " << left << setw(10) << props[ii].name << ": ";
       if (string("extensions") != props[ii].name)
-      {
-        printf("platform[%d]: %-10s: %s\n", index, props[ii].name, buf);
-      }
+        cout << buf << endl;
       else
-      {
-        ss.str(buf);
-        string word;
-        vector<string> words;
-        while (ss >> word)
-          words.push_back(word);
-        sort(words.begin(), words.end());
-        printf("platform[%d]: %-10s: %s\n", index, props[ii].name, words[0].c_str());
-        for (vector<string>::size_type ii = 1; ii != words.size(); ++ii)
-          cout << setw(25) << " " << words[ii] << endl;
-        ss.str(string());
-      }
+        print_extensions(buf, 25);
     }
 
     cl_uint num_devices;
