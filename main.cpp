@@ -27,11 +27,31 @@ class CLinfo {
 
 public:
 
-  CLinfo(int argc, char** argv)
+  CLinfo(int argc, char** argv) : dump_image_formats(false)
   {
-    dump_image_formats = false;
-    parse_options(argc, argv);
+    static struct option options[] = {
+      {"help",          0, nullptr, 'h'},
+      {"image-formats", 0, nullptr, 'i'},
+      {nullptr,         0, nullptr, 0}};
+    int opt;
 
+    while (EOF != (opt = getopt_long(argc, argv, "hi", options, nullptr)))
+    {
+      switch (opt)
+      {
+      case 'i':
+        dump_image_formats = true;
+        break;
+      case 'h':
+      default:
+        usage(argv[0]);
+        break;
+      }
+    }
+  }
+
+  void display()
+  {
     cl_uint num_platforms;
     auto err = clGetPlatformIDs(0, NULL, &num_platforms);
     check_opencl_status(err, "Unable to query the number of platforms");
@@ -47,32 +67,15 @@ public:
     err = clGetPlatformIDs(num_platforms, platform_ids.get(), nullptr);
     check_opencl_status(err, "Unable to enumerate the platforms");
     for (cl_uint ii = 0; ii < num_platforms; ++ii)
-      platforms.push_back(*(platform_ids.get() + ii));
-  }
-
-  void display()
-  {
-    vector<cl_platform_id>::size_type ii = 0;
-    for (auto id : platforms)
     {
-      print_platform(ii, id);
-      if (++ii < platforms.size())
+      print_platform(ii, platform_ids.get()[ii]);
+      if (ii + 1 < num_platforms)
         cout << "================================================================================\n";
     }
   }
 
 private:
-  vector<cl_platform_id> platforms;
   bool dump_image_formats;
-
-  void check_opencl_status(cl_int err, const string& msg)
-  {
-    if (CL_SUCCESS != err)
-    {
-      cerr << msg << ": " << cl_strerror(err) << endl;
-      exit(1);
-    }
-  }
 
   /**
    * usage --
@@ -91,36 +94,12 @@ private:
     exit(1);
   }
 
-  /**
-   * parse_options --
-   *
-   *      Converts the commandline parameters into their internal
-   *      representation.
-   *
-   * Results:
-   *      void, opts is initialized.
-   */
-  void parse_options(int argc, char *argv[])
+  void check_opencl_status(cl_int err, const string& msg)
   {
-    static struct option options[] = {
-      { "help",          0, nullptr, 'h' },
-      { "image-formats", 0, nullptr, 'i' },
-      { nullptr,         0, nullptr, 0}
-    };
-    int opt;
-
-    while (EOF != (opt = getopt_long(argc, argv, "hi", options, NULL)))
+    if (CL_SUCCESS != err)
     {
-      switch (opt)
-      {
-      case 'i':
-        dump_image_formats = true;
-        break;
-      case 'h':
-      default:
-        usage(argv[0]);
-        break;
-      }
+      cerr << msg << ": " << cl_strerror(err) << endl;
+      exit(1);
     }
   }
 
@@ -135,28 +114,26 @@ private:
    */
   const char* cl_strerror(cl_int error)
   {
-    static struct { cl_int code; const char *msg; } error_table[] = {
-      { CL_SUCCESS,                       "no error" },
-      { CL_DEVICE_NOT_FOUND,              "device not found"              },
-      { CL_DEVICE_NOT_AVAILABLE,          "device not available"          },
-      { CL_COMPILER_NOT_AVAILABLE,        "compiler not available"        },
-      { CL_MEM_OBJECT_ALLOCATION_FAILURE, "mem object allocation failure" },
-      { CL_OUT_OF_RESOURCES,              "out of resources"              },
-      { CL_OUT_OF_HOST_MEMORY,            "out of host memory"            },
-      { CL_PROFILING_INFO_NOT_AVAILABLE,  "profiling not available"       },
-      { CL_MEM_COPY_OVERLAP,              "memcopy overlaps"              },
-      { CL_IMAGE_FORMAT_MISMATCH,         "image format mismatch"         },
-      { CL_IMAGE_FORMAT_NOT_SUPPORTED,    "image format not supported"    },
-      { CL_BUILD_PROGRAM_FAILURE,         "build program failed"          },
-      { CL_MAP_FAILURE,                   "map failed"                    },
-      { CL_INVALID_VALUE,                 "invalid value"                 },
-      { CL_INVALID_DEVICE_TYPE,           "invalid device type"           },
-      { 0, NULL }
-    };
+    static struct {cl_int code; const char *msg;} error_table[] = {
+      {CL_SUCCESS,                       "no error"                     },
+      {CL_DEVICE_NOT_FOUND,              "device not found"             },
+      {CL_DEVICE_NOT_AVAILABLE,          "device not available"         },
+      {CL_COMPILER_NOT_AVAILABLE,        "compiler not available"       },
+      {CL_MEM_OBJECT_ALLOCATION_FAILURE, "mem object allocation failure"},
+      {CL_OUT_OF_RESOURCES,              "out of resources"             },
+      {CL_OUT_OF_HOST_MEMORY,            "out of host memory"           },
+      {CL_PROFILING_INFO_NOT_AVAILABLE,  "profiling not available"      },
+      {CL_MEM_COPY_OVERLAP,              "memcopy overlaps"             },
+      {CL_IMAGE_FORMAT_MISMATCH,         "image format mismatch"        },
+      {CL_IMAGE_FORMAT_NOT_SUPPORTED,    "image format not supported"   },
+      {CL_BUILD_PROGRAM_FAILURE,         "build program failed"         },
+      {CL_MAP_FAILURE,                   "map failed"                   },
+      {CL_INVALID_VALUE,                 "invalid value"                },
+      {CL_INVALID_DEVICE_TYPE,           "invalid device type"          },
+      {0, nullptr}};
     static char unknown[25];
-    int ii;
 
-    for (ii = 0; error_table[ii].msg != NULL; ++ii)
+    for (int ii = 0; error_table[ii].msg != NULL; ++ii)
       if (error_table[ii].code == error)
         return error_table[ii].msg;
 
