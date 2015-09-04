@@ -314,7 +314,6 @@ private:
     uint64_t val; /* Avoids unpleasant surprises for some params */
     size_t size;
     cl_int err;
-    int ii;
     stringstream ss;
 
     err = clGetDeviceInfo(device, CL_DEVICE_TYPE, sizeof val, &val, NULL);
@@ -352,7 +351,7 @@ private:
       fprintf(stderr, "device[%d]: Unable to get TYPE: %s!\n", device_index, cl_strerror(err));
     }
 
-    for (ii = 0; strProps[ii].name != NULL; ++ii)
+    for (int ii = 0; strProps[ii].name != NULL; ++ii)
     {
       err = clGetDeviceInfo(device, strProps[ii].param, sizeof buf, buf, &size);
       if (err != CL_SUCCESS)
@@ -433,7 +432,7 @@ private:
       fprintf(stderr, "device[%d]: Unable to get CL_DEVICE_LOCAL_MEM_TYPE: %s!\n", device_index, cl_strerror(err));
     }
 
-    for (ii = 0; hexProps[ii].name != NULL; ++ii)
+    for (int ii = 0; hexProps[ii].name != NULL; ++ii)
     {
       err = clGetDeviceInfo(device, hexProps[ii].param, sizeof val, &val, &size);
       if (CL_SUCCESS != err)
@@ -448,7 +447,7 @@ private:
       cout << "device[" << device_index << "]: " << left << setw(30) << hexProps[ii].name << ": 0x" << hex << val << dec << endl;
     }
 
-    for (ii = 0; longProps[ii].name != NULL; ++ii)
+    for (int ii = 0; longProps[ii].name != NULL; ++ii)
     {
       err = clGetDeviceInfo(device, longProps[ii].param, sizeof val, &val, &size);
       if (CL_SUCCESS != err)
