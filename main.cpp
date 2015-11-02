@@ -11,9 +11,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <iostream>
-#include <memory>
 #include <sstream>
-#include <string>
 #include <vector>
 #ifdef __APPLE__
 #include <OpenCL/opencl.h>
@@ -23,11 +21,11 @@
 
 using namespace std;
 
-class CLinfo {
+class CL_info {
 
 public:
 
-  CLinfo(int argc, char** argv) : dump_image_formats(false)
+  CL_info(int argc, char** argv) : dump_image_formats(false)
   {
     static struct option options[] = {
       {"help",          0, nullptr, 'h'},
@@ -76,6 +74,7 @@ public:
 
 private:
   bool dump_image_formats;
+  static char unknown[25];
 
   /**
    * usage --
@@ -98,13 +97,13 @@ private:
   {
     if (CL_SUCCESS != err)
     {
-      cerr << msg << ": " << cl_strerror(err) << endl;
+      cerr << msg << ": " << cl_error_str(err) << endl;
       exit(1);
     }
   }
 
   /**
-   * cl_strerror --
+   * cl_error_str --
    *
    *      Utility function that converts an OpenCL error into a human
    *      readable string.
@@ -112,7 +111,7 @@ private:
    * Results:
    *      const char * pointer to a static string.
    */
-  const char* cl_strerror(cl_int error)
+  const char* cl_error_str(cl_int error)
   {
     static struct {cl_int code; const char *msg;} error_table[] = {
       {CL_SUCCESS,                       "no error"                     },
@@ -131,7 +130,6 @@ private:
       {CL_INVALID_VALUE,                 "invalid value"                },
       {CL_INVALID_DEVICE_TYPE,           "invalid device type"          },
       {0, nullptr}};
-    static char unknown[25];
 
     for (int ii = 0; error_table[ii].msg != NULL; ++ii)
       if (error_table[ii].code == error)
@@ -161,7 +159,10 @@ private:
    * Results:
    *      void.
    */
-  void print_image_formats(int device_index, const cl_device_id *devices, cl_mem_flags flags, cl_mem_object_type image_type)
+  void print_image_formats(int device_index,
+                           const cl_device_id *devices,
+                           cl_mem_flags flags,
+                           cl_mem_object_type image_type)
   {
     cl_uint fmt;
     cl_int err;
@@ -170,20 +171,21 @@ private:
     context = clCreateContext(NULL, 1, devices, NULL, NULL, &err);
     if (err != CL_SUCCESS)
     {
-      fprintf(stderr, "\tdevice[%d]: Unable to create context: %s!\n", device_index, cl_strerror(err));
+      fprintf(stderr, "\tdevice[%d]: Unable to create context: %s!\n", device_index, cl_error_str(err));
       return;
     }
     err = clGetSupportedImageFormats(context, flags, image_type, 0, NULL, &num_image_formats);
     if (err != CL_SUCCESS)
     {
-      fprintf(stderr, "\tdevice[%d]: Unable to get number of supported image formats: %s!\n", device_index, cl_strerror(err));
+      fprintf(stderr, "\tdevice[%d]: Unable to get number of supported image formats: %s!\n", device_index,
+              cl_error_str(err));
       return;
     }
     auto image_formats = new cl_image_format[num_image_formats];
     err = clGetSupportedImageFormats(context, flags, image_type, num_image_formats, image_formats, NULL);
     if (err != CL_SUCCESS)
     {
-      fprintf(stderr, "\tdevice[%d]: Unable to get supported image formats: %s!\n", device_index, cl_strerror(err));
+      fprintf(stderr, "\tdevice[%d]: Unable to get supported image formats: %s!\n", device_index, cl_error_str(err));
       return;
     }
     for (fmt = 0; fmt < num_image_formats; ++fmt)
@@ -238,7 +240,7 @@ private:
     }
     delete[] image_formats;
     if ((err = clReleaseContext(context)) != CL_SUCCESS)
-      fprintf(stderr, "\tdevice[%d]: Unable to release context: %s!\n", device_index, cl_strerror(err));
+      fprintf(stderr, "\tdevice[%d]: Unable to release context: %s!\n", device_index, cl_error_str(err));
   }
 
   void print_extensions(const char* buf, int width)
@@ -266,69 +268,69 @@ private:
   void print_device(int device_index, cl_device_id device)
   {
 #define LONG_PROPS                            \
-    defn(VENDOR_ID),                          \
-    defn(MAX_COMPUTE_UNITS),                  \
-    defn(MAX_WORK_ITEM_DIMENSIONS),           \
-    defn(MAX_WORK_GROUP_SIZE),                \
-    defn(PREFERRED_VECTOR_WIDTH_CHAR),        \
-    defn(PREFERRED_VECTOR_WIDTH_SHORT),       \
-    defn(PREFERRED_VECTOR_WIDTH_INT),         \
-    defn(PREFERRED_VECTOR_WIDTH_LONG),        \
-    defn(PREFERRED_VECTOR_WIDTH_FLOAT),       \
-    defn(PREFERRED_VECTOR_WIDTH_DOUBLE),      \
-    defn(MAX_CLOCK_FREQUENCY),                \
-    defn(ADDRESS_BITS),                       \
-    defn(MAX_MEM_ALLOC_SIZE),                 \
-    defn(IMAGE_SUPPORT),                      \
-    defn(MAX_READ_IMAGE_ARGS),                \
-    defn(MAX_WRITE_IMAGE_ARGS),               \
-    defn(IMAGE2D_MAX_WIDTH),                  \
-    defn(IMAGE2D_MAX_HEIGHT),                 \
-    defn(IMAGE3D_MAX_WIDTH),                  \
-    defn(IMAGE3D_MAX_HEIGHT),                 \
-    defn(IMAGE3D_MAX_DEPTH),                  \
-    defn(MAX_SAMPLERS),                       \
-    defn(MAX_PARAMETER_SIZE),                 \
-    defn(MEM_BASE_ADDR_ALIGN),                \
-    defn(MIN_DATA_TYPE_ALIGN_SIZE),           \
-    defn(GLOBAL_MEM_CACHELINE_SIZE),          \
-    defn(GLOBAL_MEM_CACHE_SIZE),              \
-    defn(GLOBAL_MEM_SIZE),                    \
-    defn(MAX_CONSTANT_BUFFER_SIZE),           \
-    defn(MAX_CONSTANT_ARGS),                  \
-    defn(LOCAL_MEM_SIZE),                     \
-    defn(ERROR_CORRECTION_SUPPORT),           \
-    defn(PROFILING_TIMER_RESOLUTION),         \
-    defn(ENDIAN_LITTLE),                      \
-    defn(AVAILABLE),                          \
-    defn(COMPILER_AVAILABLE),
+    def(VENDOR_ID),                          \
+    def(MAX_COMPUTE_UNITS),                  \
+    def(MAX_WORK_ITEM_DIMENSIONS),           \
+    def(MAX_WORK_GROUP_SIZE),                \
+    def(PREFERRED_VECTOR_WIDTH_CHAR),        \
+    def(PREFERRED_VECTOR_WIDTH_SHORT),       \
+    def(PREFERRED_VECTOR_WIDTH_INT),         \
+    def(PREFERRED_VECTOR_WIDTH_LONG),        \
+    def(PREFERRED_VECTOR_WIDTH_FLOAT),       \
+    def(PREFERRED_VECTOR_WIDTH_DOUBLE),      \
+    def(MAX_CLOCK_FREQUENCY),                \
+    def(ADDRESS_BITS),                       \
+    def(MAX_MEM_ALLOC_SIZE),                 \
+    def(IMAGE_SUPPORT),                      \
+    def(MAX_READ_IMAGE_ARGS),                \
+    def(MAX_WRITE_IMAGE_ARGS),               \
+    def(IMAGE2D_MAX_WIDTH),                  \
+    def(IMAGE2D_MAX_HEIGHT),                 \
+    def(IMAGE3D_MAX_WIDTH),                  \
+    def(IMAGE3D_MAX_HEIGHT),                 \
+    def(IMAGE3D_MAX_DEPTH),                  \
+    def(MAX_SAMPLERS),                       \
+    def(MAX_PARAMETER_SIZE),                 \
+    def(MEM_BASE_ADDR_ALIGN),                \
+    def(MIN_DATA_TYPE_ALIGN_SIZE),           \
+    def(GLOBAL_MEM_CACHELINE_SIZE),          \
+    def(GLOBAL_MEM_CACHE_SIZE),              \
+    def(GLOBAL_MEM_SIZE),                    \
+    def(MAX_CONSTANT_BUFFER_SIZE),           \
+    def(MAX_CONSTANT_ARGS),                  \
+    def(LOCAL_MEM_SIZE),                     \
+    def(ERROR_CORRECTION_SUPPORT),           \
+    def(PROFILING_TIMER_RESOLUTION),         \
+    def(ENDIAN_LITTLE),                      \
+    def(AVAILABLE),                          \
+    def(COMPILER_AVAILABLE),
 
 #define STR_PROPS                             \
-    defn(NAME),                               \
-    defn(VENDOR),                             \
-    defn(PROFILE),                            \
-    defn(VERSION),
+    def(NAME),                               \
+    def(VENDOR),                             \
+    def(PROFILE),                            \
+    def(VERSION),
 
 #define HEX_PROPS                             \
-    defn(SINGLE_FP_CONFIG),                   \
-    defn(QUEUE_PROPERTIES),
+    def(SINGLE_FP_CONFIG),                   \
+    def(QUEUE_PROPERTIES),
 
     static struct {cl_device_info param; const char* name;} longProps[] = {
-#define defn(X) {CL_DEVICE_##X, #X}
+#define def(X) {CL_DEVICE_##X, #X}
       LONG_PROPS
-#undef defn
+#undef def
       {0, NULL}
     };
     static struct {cl_device_info param; const char* name;} hexProps[] = {
-#define defn(X) {CL_DEVICE_##X, #X}
+#define def(X) {CL_DEVICE_##X, #X}
       HEX_PROPS
-#undef defn
+#undef def
       {0, NULL}
     };
     static struct {cl_device_info param; const char* name;} strProps[] = {
-#define defn(X) {CL_DEVICE_##X, #X}
+#define def(X) {CL_DEVICE_##X, #X}
       STR_PROPS
-#undef defn
+#undef def
       {CL_DRIVER_VERSION, "DRIVER_VERSION"},
       {CL_DEVICE_EXTENSIONS, "EXTENSIONS"},
       {0, NULL}
@@ -371,7 +373,7 @@ private:
     }
     else
     {
-      fprintf(stderr, "device[%d]: Unable to get TYPE: %s!\n", device_index, cl_strerror(err));
+      fprintf(stderr, "device[%d]: Unable to get TYPE: %s!\n", device_index, cl_error_str(err));
     }
 
     for (int ii = 0; strProps[ii].name != NULL; ++ii)
@@ -379,12 +381,13 @@ private:
       err = clGetDeviceInfo(device, strProps[ii].param, sizeof buf, buf, &size);
       if (err != CL_SUCCESS)
       {
-        fprintf(stderr, "device[%d]: Unable to get %s: %s!\n", device_index, strProps[ii].name, cl_strerror(err));
+        fprintf(stderr, "device[%d]: Unable to get %s: %s!\n", device_index, strProps[ii].name, cl_error_str(err));
         continue;
       }
       if (size > sizeof buf)
       {
-        fprintf(stderr, "device[%d]: Large %s (%ld bytes)!  Truncating to %ld!\n", device_index, strProps[ii].name, size, sizeof buf);
+        fprintf(stderr, "device[%d]: Large %s (%ld bytes)!  Truncating to %ld!\n",
+                device_index, strProps[ii].name, size, sizeof buf);
       }
       cout << "device[" << device_index << "]: " << left << setw(30) << strProps[ii].name << ": ";
       if (string("EXTENSIONS") != strProps[ii].name)
@@ -415,7 +418,7 @@ private:
     }
     else
     {
-      fprintf(stderr, "device[%d]: Unable to get EXECUTION_CAPABILITIES: %s!\n", device_index, cl_strerror(err));
+      fprintf(stderr, "device[%d]: Unable to get EXECUTION_CAPABILITIES: %s!\n", device_index, cl_error_str(err));
     }
 
     err = clGetDeviceInfo(device, CL_DEVICE_GLOBAL_MEM_CACHE_TYPE, sizeof val, &val, NULL);
@@ -424,24 +427,25 @@ private:
       static const char *cacheTypes[] = { "None", "Read-Only", "Read-Write" };
       static size_t numTypes = sizeof cacheTypes / sizeof cacheTypes[0];
 
-      printf("device[%d]: GLOBAL_MEM_CACHE_TYPE         : %s (%ld)\n", device_index, val < numTypes ? cacheTypes[val] : "???", (unsigned long) val);
+      printf("device[%d]: GLOBAL_MEM_CACHE_TYPE         : %s (%ld)\n",
+             device_index, val < numTypes ? cacheTypes[val] : "???", (unsigned long) val);
     }
     else
     {
-      fprintf(stderr, "device[%d]: Unable to get GLOBAL_MEM_CACHE_TYPE: %s!\n", device_index, cl_strerror(err));
+      fprintf(stderr, "device[%d]: Unable to get GLOBAL_MEM_CACHE_TYPE: %s!\n", device_index, cl_error_str(err));
     }
     err = clGetDeviceInfo(device, CL_DEVICE_LOCAL_MEM_TYPE, sizeof val, &val, NULL);
     if (err == CL_SUCCESS)
     {
-      static const char *lmemTypes[] = { "???", "Local", "Global" };
-      static size_t numTypes = sizeof lmemTypes / sizeof lmemTypes[0];
+      static const char* memory_types[] = { "???", "Local", "Global" };
+      static size_t numTypes = sizeof memory_types / sizeof memory_types[0];
 
       cout << "device[" << device_index << "]: CL_DEVICE_LOCAL_MEM_TYPE      : "
-           << (val < numTypes ? lmemTypes[val] : "???") << " (" << val << ")" << endl;
+           << (val < numTypes ? memory_types[val] : "???") << " (" << val << ")" << endl;
     }
     else
     {
-      fprintf(stderr, "device[%d]: Unable to get CL_DEVICE_LOCAL_MEM_TYPE: %s!\n", device_index, cl_strerror(err));
+      fprintf(stderr, "device[%d]: Unable to get CL_DEVICE_LOCAL_MEM_TYPE: %s!\n", device_index, cl_error_str(err));
     }
 
     for (int ii = 0; hexProps[ii].name != NULL; ++ii)
@@ -449,14 +453,16 @@ private:
       err = clGetDeviceInfo(device, hexProps[ii].param, sizeof val, &val, &size);
       if (CL_SUCCESS != err)
       {
-        fprintf(stderr, "device[%d]: Unable to get %s: %s!\n", device_index, hexProps[ii].name, cl_strerror(err));
+        fprintf(stderr, "device[%d]: Unable to get %s: %s!\n", device_index, hexProps[ii].name, cl_error_str(err));
         continue;
       }
       if (size > sizeof val)
       {
-        fprintf(stderr, "device[%d]: Large %s (%lu bytes)!  Truncating to %lu!\n", device_index, hexProps[ii].name, size, sizeof val);
+        fprintf(stderr, "device[%d]: Large %s (%lu bytes)!  Truncating to %lu!\n",
+                device_index, hexProps[ii].name, size, sizeof val);
       }
-      cout << "device[" << device_index << "]: " << left << setw(30) << hexProps[ii].name << ": 0x" << hex << val << dec << endl;
+      cout << "device[" << device_index << "]: " << left << setw(30) << hexProps[ii].name
+           << ": 0x" << hex << val << dec << endl;
     }
 
     for (int ii = 0; longProps[ii].name != NULL; ++ii)
@@ -464,23 +470,26 @@ private:
       err = clGetDeviceInfo(device, longProps[ii].param, sizeof val, &val, &size);
       if (CL_SUCCESS != err)
       {
-        fprintf(stderr, "device[%d]: Unable to get %s: %s!\n", device_index, longProps[ii].name, cl_strerror(err));
+        fprintf(stderr, "device[%d]: Unable to get %s: %s!\n", device_index, longProps[ii].name, cl_error_str(err));
         continue;
       }
       if (size > sizeof val)
       {
-        fprintf(stderr, "device[%d]: Large %s (%lu bytes)!  Truncating to %lu!\n", device_index, longProps[ii].name, size, sizeof val);
+        fprintf(stderr, "device[%d]: Large %s (%lu bytes)!  Truncating to %lu!\n",
+                device_index, longProps[ii].name, size, sizeof val);
       }
-      cout << "device[" << device_index << "]: " << left << setw(30) << longProps[ii].name << ": " << format_long(val) << endl;
+      cout << "device[" << device_index << "]: " << left << setw(30) << longProps[ii].name
+           << ": " << format_long(val) << endl;
     }
     err = clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_ITEM_SIZES, sizeof work_item_sizes, work_item_sizes, NULL);
     if (CL_SUCCESS != err)
     {
-      fprintf(stderr, "device[%d]: Unable to get MAX_WORK_ITEM_SIZES: %s!\n", device_index, cl_strerror(err));
+      fprintf(stderr, "device[%d]: Unable to get MAX_WORK_ITEM_SIZES: %s!\n", device_index, cl_error_str(err));
     }
     else
     {
-      printf("device[%d]: %-30s: %zd, %zd, %zd\n", device_index, "MAX_WORK_ITEM_SIZES", work_item_sizes[0], work_item_sizes[1], work_item_sizes[2]);
+      printf("device[%d]: %-30s: %zd, %zd, %zd\n", device_index, "MAX_WORK_ITEM_SIZES",
+             work_item_sizes[0], work_item_sizes[1], work_item_sizes[2]);
     }
     if (dump_image_formats)
     {
@@ -520,7 +529,8 @@ private:
       ss.str(string());
       if (size > sizeof buf)
       {
-        fprintf(stderr, "platform[%d]: Huge %s (%lu bytes)!  Truncating to %lu\n", index, props[ii].name, size, sizeof buf);
+        fprintf(stderr, "platform[%d]: Huge %s (%lu bytes)!  Truncating to %lu\n",
+                index, props[ii].name, size, sizeof buf);
       }
       cout << "platform[" << index << "]: " << left << setw(10) << props[ii].name << ": ";
       if (string("extensions") != props[ii].name)
@@ -552,9 +562,11 @@ private:
 
 };
 
+char CL_info::unknown[25];
+
 int main(int argc, char* argv[])
 {
-  CLinfo info(argc, argv);
+  CL_info info(argc, argv);
   info.display();
   return EXIT_SUCCESS;
 }
