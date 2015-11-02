@@ -6,9 +6,9 @@
  *
  * (Jeremy Sugerman, 13 August 2009)
  */
+#include <algorithm>
 #include <getopt.h>
 #include <cstdlib>
-#include <algorithm>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -55,9 +55,7 @@ public:
     cl_uint num_platforms;
     auto err = clGetPlatformIDs(0, NULL, &num_platforms);
     check_opencl_status(err, "Unable to query the number of platforms");
-
     cout << num_platforms << " platform" << (num_platforms == 1 ? ":" : "s:") << endl;
-
     unique_ptr<cl_platform_id> platform_ids(new cl_platform_id[num_platforms]);
     if (nullptr == platform_ids)
     {
@@ -88,10 +86,10 @@ private:
    */
   void usage(const char *program)
   {
-    fprintf(stderr, "Usage: %s [options]\n", program);
-    fprintf(stderr, "Options:\n");
-    fprintf(stderr, "  -h, --help                This message\n");
-    fprintf(stderr, "  -i, --image-formats       Print image formats for each device\n");
+    cerr << "Usage: " << program << " [options]\n";
+    cerr << "Options:\n";
+    cerr << "  -h, --help                This message\n";
+    cerr << "  -i, --image-formats       Print image formats for each device\n";
     exit(1);
   }
 
@@ -269,7 +267,7 @@ private:
    */
   void print_device(int device_index, cl_device_id device)
   {
-#define LONG_PROPS                            \
+#define LONG_PROPS                           \
     def(VENDOR_ID),                          \
     def(MAX_COMPUTE_UNITS),                  \
     def(MAX_WORK_ITEM_DIMENSIONS),           \
@@ -307,13 +305,13 @@ private:
     def(AVAILABLE),                          \
     def(COMPILER_AVAILABLE),
 
-#define STR_PROPS                             \
+#define STR_PROPS                            \
     def(NAME),                               \
     def(VENDOR),                             \
     def(PROFILE),                            \
     def(VERSION),
 
-#define HEX_PROPS                             \
+#define HEX_PROPS                            \
     def(SINGLE_FP_CONFIG),                   \
     def(QUEUE_PROPERTIES),
 
@@ -350,12 +348,12 @@ private:
       if (val & CL_DEVICE_TYPE_DEFAULT)
       {
         val &= ~CL_DEVICE_TYPE_DEFAULT;
-        printf("Default ");
+        cout << "Default ";
       }
       if (val & CL_DEVICE_TYPE_CPU)
       {
         val &= ~CL_DEVICE_TYPE_CPU;
-        printf("CPU ");
+        cout << "CPU ";
       }
       if (val & CL_DEVICE_TYPE_GPU)
       {
@@ -371,7 +369,7 @@ private:
       {
         printf("Unknown (0x%lx) ", (unsigned long) val);
       }
-      printf("\n");
+      cout << endl;
     }
     else
     {
@@ -416,7 +414,7 @@ private:
       {
         printf("Unknown (0x%lx) ", (unsigned long) val);
       }
-      printf("\n");
+      cout << endl;
     }
     else
     {
@@ -472,13 +470,14 @@ private:
       err = clGetDeviceInfo(device, longProps[ii].param, sizeof val, &val, &size);
       if (CL_SUCCESS != err)
       {
-        fprintf(stderr, "device[%d]: Unable to get %s: %s!\n", device_index, longProps[ii].name, cl_error_str(err));
+        cerr << "device[" << device_index << "]: Unable to get " << longProps[ii].name
+             << ": " << cl_error_str(err) << "!" << endl;
         continue;
       }
       if (size > sizeof val)
       {
-        fprintf(stderr, "device[%d]: Large %s (%lu bytes)!  Truncating to %lu!\n",
-                device_index, longProps[ii].name, size, sizeof val);
+        cerr << "device[" << device_index << "]: Large " << longProps[ii].name
+             << " (" << size << " bytes)!  Truncating to " << sizeof val << "!" << endl;
       }
       cout << "device[" << device_index << "]: " << left << setw(30) << longProps[ii].name
            << ": " << format_long(val) << endl;
@@ -486,7 +485,8 @@ private:
     err = clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_ITEM_SIZES, sizeof work_item_sizes, work_item_sizes, NULL);
     if (CL_SUCCESS != err)
     {
-      fprintf(stderr, "device[%d]: Unable to get MAX_WORK_ITEM_SIZES: %s!\n", device_index, cl_error_str(err));
+      cerr << "device[" << device_index << "]: Unable to get MAX_WORK_ITEM_SIZES: "
+           << cl_error_str(err) << "!" << endl;
     }
     else
     {
@@ -530,30 +530,25 @@ private:
       check_opencl_status(err, ss.str());
       ss.str(string());
       if (size > sizeof buf)
-      {
-        fprintf(stderr, "platform[%d]: Huge %s (%lu bytes)!  Truncating to %lu\n",
-                index, props[ii].name, size, sizeof buf);
-      }
+        cerr << "platform[" << index << "]: Huge " << props[ii].name
+             << " (" << size << " bytes)!  Truncating to " << sizeof buf << endl;
       cout << "platform[" << index << "]: " << left << setw(10) << props[ii].name << ": ";
       if (string("extensions") != props[ii].name)
         cout << buf << endl;
       else
         print_extensions(buf, 25);
     }
-
     cl_uint num_devices;
     err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, NULL, &num_devices);
     ss << "platform[" << index << "]: Unable to query the number of devices";
     check_opencl_status(err, ss.str());
     ss.str(string());
-    printf("platform[%d], %d device%s:\n", index, num_devices, (num_devices == 1 ? "" : "s"));
-
+    cout << "platform[" << index << "], " << num_devices << " device" << (num_devices == 1 ? "" : "s") << ":" << endl;
     unique_ptr<cl_device_id> device_ids(new cl_device_id[num_devices]);
     err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, num_devices, device_ids.get(), NULL);
     ss << "platform[" << index << "]: Unable to enumerate the devices";
     check_opencl_status(err, ss.str());
     ss.str(string());
-
     for (cl_uint ii = 0; ii < num_devices; ++ii)
     {
       print_device(ii, *(device_ids.get() + ii));
