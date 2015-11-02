@@ -16,6 +16,8 @@
 #ifdef __APPLE__
 #include <OpenCL/opencl.h>
 #else
+#include <memory>
+#include <string>
 #include "CL/cl.h"
 #endif
 
