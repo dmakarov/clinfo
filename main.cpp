@@ -171,42 +171,43 @@ private:
     context = clCreateContext(NULL, 1, devices, NULL, NULL, &err);
     if (err != CL_SUCCESS)
     {
-      fprintf(stderr, "\tdevice[%d]: Unable to create context: %s!\n", device_index, cl_error_str(err));
+      cerr << "\tdevice[" << device_index << "]: Unable to create context: "
+           << cl_error_str(err) << "!" << endl;
       return;
     }
     err = clGetSupportedImageFormats(context, flags, image_type, 0, NULL, &num_image_formats);
     if (err != CL_SUCCESS)
     {
-      fprintf(stderr, "\tdevice[%d]: Unable to get number of supported image formats: %s!\n", device_index,
-              cl_error_str(err));
+      cerr << "\tdevice[" << device_index << "]: Unable to get number of supported image formats: "
+           << cl_error_str(err) << "!" << endl;
       return;
     }
     auto image_formats = new cl_image_format[num_image_formats];
     err = clGetSupportedImageFormats(context, flags, image_type, num_image_formats, image_formats, NULL);
     if (err != CL_SUCCESS)
     {
-      fprintf(stderr, "\tdevice[%d]: Unable to get supported image formats: %s!\n", device_index, cl_error_str(err));
+      cerr << "\tdevice[" << device_index << "]: Unable to get supported image formats: "
+           << cl_error_str(err) << "!" << endl;
       return;
     }
     for (fmt = 0; fmt < num_image_formats; ++fmt)
     {
-      if (fmt > 0)
-        printf("                                          ");
+      if (fmt > 0) cout << "                                          ";
       switch (image_formats[fmt].image_channel_order)
       {
-      case CL_R:             printf(" CL_R            "); break;
-      case CL_A:             printf(" CL_A            "); break;
-      case CL_RG:            printf(" CL_RG           "); break;
-      case CL_RA:            printf(" CL_RA           "); break;
-      case CL_RGB:           printf(" CL_RGB          "); break;
-      case CL_RGBA:          printf(" CL_RGBA         "); break;
-      case CL_BGRA:          printf(" CL_BGRA         "); break;
-      case CL_ARGB:          printf(" CL_ARGB         "); break;
-      case CL_INTENSITY:     printf(" CL_INTENSITY    "); break;
-      case CL_LUMINANCE:     printf(" CL_LUMINANCE    "); break;
-      case CL_Rx:            printf(" CL_Rx           "); break;
-      case CL_RGx:           printf(" CL_RGx          "); break;
-      case CL_RGBx:          printf(" CL_RGBx         "); break;
+      case CL_R:             cout << " CL_R            "; break;
+      case CL_A:             cout << " CL_A            "; break;
+      case CL_RG:            cout << " CL_RG           "; break;
+      case CL_RA:            cout << " CL_RA           "; break;
+      case CL_RGB:           cout << " CL_RGB          "; break;
+      case CL_RGBA:          cout << " CL_RGBA         "; break;
+      case CL_BGRA:          cout << " CL_BGRA         "; break;
+      case CL_ARGB:          cout << " CL_ARGB         "; break;
+      case CL_INTENSITY:     cout << " CL_INTENSITY    "; break;
+      case CL_LUMINANCE:     cout << " CL_LUMINANCE    "; break;
+      case CL_Rx:            cout << " CL_Rx           "; break;
+      case CL_RGx:           cout << " CL_RGx          "; break;
+      case CL_RGBx:          cout << " CL_RGBx         "; break;
 #ifdef CL_DEPTH
       case CL_DEPTH:         printf(" CL_DEPTH        "); break;
 #endif
@@ -217,21 +218,21 @@ private:
       }
       switch (image_formats[fmt].image_channel_data_type)
       {
-      case CL_SNORM_INT8:      printf(", CL_SNORM_INT8\n");      break;
-      case CL_SNORM_INT16:     printf(", CL_SNORM_INT16\n");     break;
-      case CL_UNORM_INT8:      printf(", CL_UNORM_INT8\n");      break;
-      case CL_UNORM_INT16:     printf(", CL_UNORM_INT16\n");     break;
-      case CL_UNORM_SHORT_565: printf(", CL_UNORM_SHORT_565\n"); break;
-      case CL_UNORM_SHORT_555: printf(", CL_UNORM_SHORT_555\n"); break;
-      case CL_UNORM_INT_101010:printf(", CL_UNORM_INT_101010\n");break;
-      case CL_SIGNED_INT8:     printf(", CL_SIGNED_INT8\n");     break;
-      case CL_SIGNED_INT16:    printf(", CL_SIGNED_INT16\n");    break;
-      case CL_SIGNED_INT32:    printf(", CL_SIGNED_INT32\n");    break;
-      case CL_UNSIGNED_INT8:   printf(", CL_UNSIGNED_INT8\n");   break;
-      case CL_UNSIGNED_INT16:  printf(", CL_UNSIGNED_INT16\n");  break;
-      case CL_UNSIGNED_INT32:  printf(", CL_UNSIGNED_INT32\n");  break;
-      case CL_HALF_FLOAT:      printf(", CL_HALF_FLOAT\n");      break;
-      case CL_FLOAT:           printf(", CL_FLOAT\n");           break;
+      case CL_SNORM_INT8:      cout << ", CL_SNORM_INT8\n";      break;
+      case CL_SNORM_INT16:     cout << ", CL_SNORM_INT16\n";     break;
+      case CL_UNORM_INT8:      cout << ", CL_UNORM_INT8\n";      break;
+      case CL_UNORM_INT16:     cout << ", CL_UNORM_INT16\n";     break;
+      case CL_UNORM_SHORT_565: cout << ", CL_UNORM_SHORT_565\n"; break;
+      case CL_UNORM_SHORT_555: cout << ", CL_UNORM_SHORT_555\n"; break;
+      case CL_UNORM_INT_101010:cout << ", CL_UNORM_INT_101010\n";break;
+      case CL_SIGNED_INT8:     cout << ", CL_SIGNED_INT8\n";     break;
+      case CL_SIGNED_INT16:    cout << ", CL_SIGNED_INT16\n";    break;
+      case CL_SIGNED_INT32:    cout << ", CL_SIGNED_INT32\n";    break;
+      case CL_UNSIGNED_INT8:   cout << ", CL_UNSIGNED_INT8\n";   break;
+      case CL_UNSIGNED_INT16:  cout << ", CL_UNSIGNED_INT16\n";  break;
+      case CL_UNSIGNED_INT32:  cout << ", CL_UNSIGNED_INT32\n";  break;
+      case CL_HALF_FLOAT:      cout << ", CL_HALF_FLOAT\n";      break;
+      case CL_FLOAT:           cout << ", CL_FLOAT\n";           break;
 #ifdef CL_UNORM_INT24
       case CL_UNORM_INT24:     printf(", CL_UNORM_INT24\n");     break;
 #endif
@@ -240,7 +241,8 @@ private:
     }
     delete[] image_formats;
     if ((err = clReleaseContext(context)) != CL_SUCCESS)
-      fprintf(stderr, "\tdevice[%d]: Unable to release context: %s!\n", device_index, cl_error_str(err));
+      cerr << "\tdevice[" << device_index << "]: Unable to release context: "
+           << cl_error_str(err) << "!" << endl;
   }
 
   void print_extensions(const char* buf, int width)
@@ -358,12 +360,12 @@ private:
       if (val & CL_DEVICE_TYPE_GPU)
       {
         val &= ~CL_DEVICE_TYPE_GPU;
-        printf("GPU ");
+        cout << "GPU ";
       }
       if (val & CL_DEVICE_TYPE_ACCELERATOR)
       {
         val &= ~CL_DEVICE_TYPE_ACCELERATOR;
-        printf("Accelerator ");
+        cout << "Accelerator ";
       }
       if (val != 0)
       {
@@ -403,12 +405,12 @@ private:
       if (val & CL_EXEC_KERNEL)
       {
         val &= ~CL_EXEC_KERNEL;
-        printf("Kernel ");
+        cout << "Kernel ";
       }
       if (val & CL_EXEC_NATIVE_KERNEL)
       {
         val &= ~CL_EXEC_NATIVE_KERNEL;
-        printf("Native ");
+        cout << "Native ";
       }
       if (val)
       {
